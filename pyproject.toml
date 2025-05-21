@@ -1,0 +1,17 @@
+[project]
+name = "googly-eyes"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Jeremy Banker", email = "loredous@loredous.net" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+googly-eyes = "googly_eyes:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
