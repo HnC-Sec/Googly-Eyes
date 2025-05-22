@@ -1,24 +1,35 @@
 from abc import ABC
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from enum import Enum
+from enum import Enum, auto
+from uuid import uuid4
 
 class ModerationActionType(Enum):
     """Enum for moderation action types."""
-    BAN = "ban"
-    KICK = "kick"
-    WARN = "warn"
-    TIMEOUT = "timeout"
-    TRUST = "trust"
+    BAN = auto()
+    KICK = auto()
+    WARN = auto()
+    TIMEOUT = auto()
+    TRUST = auto()
+
+class ActionReasonType(Enum):
+    """Enum for action reason classifications."""
+    SPAM = auto()
+    HARASSMENT = auto()
+    INAPPROPRIATE_CONTENT = auto()
+    RULE_VIOLATION = auto()
+    ABUSE = auto()
+    DISRUPTIVE_BEHAVIOR = auto()
+    OTHER = auto()
 
 @dataclass
 class BaseModerationAction(ABC):
     """Base class for moderation actions."""
     action_type: ModerationActionType
     target_user_id: str # Discord ID of the user being moderated
-    action_guild_id: str # Discord ID of the guild where the action is taken
     action_moderator_id: str # Discord ID of the moderator taking the action
     action_reason: str # Reason for the action
+    action_reason_type: ActionReasonType # Classification of the reason
     action_context: str|None # Context that caused the action
     action_timestamp: datetime = field(default_factory=datetime.now(timezone.utc)) # Timestamp of when the action was taken
     
@@ -45,5 +56,10 @@ class TimeoutAction(BaseModerationAction):
 class TrustAction(BaseModerationAction):
     """Class for trust actions."""
     action_type: ModerationActionType = field(default=ModerationActionType.TRUST, init=False)
-    trust_level: int  # Level of trust to assign
     
+class FederatedActionMessage:
+    """Class for federated action messages."""
+    action: BaseModerationAction # The moderation action taken
+    action_guild_id: str # Discord ID of the guild where the action is taken
+    message_id: str = uuid4().hex # Unique identifier for the message
+    message_timestamp: datetime = field(default_factory=datetime.now(timezone.utc)) # Timestamp of when the message was created
