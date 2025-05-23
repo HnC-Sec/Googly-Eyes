@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Flag
 from typing import Callable
+from uuid import uuid4
 
 from googly_eyes.models import FederatedActionMessage
 
@@ -13,14 +14,26 @@ class MessageTransportFeatures(Flag):
     RECEIVE = 2
     SEND_RECEIVE = SEND | RECEIVE
 
+class MessageTransportConfig(ABC):
+    """Base class for message transport configuration."""
+    name: str = field(default_factory=lambda: f"{__name__}-{uuid4()}")
 
 class MessageTransport(ABC):
     """Base class for message transport systems."""
     _available_features: MessageTransportFeatures = MessageTransportFeatures.NONE
 
-    def __init__(self) -> None:
+    def __init__(self, config: MessageTransportConfig) -> None:
         self._receive_callback = None
         self._is_running = False
+        if not isinstance(config, self.config_type):
+            raise ValueError(f"Invalid config type. Expected {self.config_type}, got {type(config)}.")
+        self._config = config
+
+    @property
+    @abstractmethod
+    def config_type(self) -> type[MessageTransportConfig]:
+        """Return the type of the message transport configuration."""
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def start(self) -> bool:
         """Start the transport system."""
@@ -77,6 +90,37 @@ class MessageTransport(ABC):
         """Get the available features of the transport."""
         return self._available_features
 
+class MockMessageTransportConfig(MessageTransportConfig):
+    """Mock message transport configuration for testing purposes."""
+    
+class MockMessageTransport(MessageTransport):
+    """Mock message transport for testing purposes."""
+    _available_features: MessageTransportFeatures = MessageTransportFeatures.SEND_RECEIVE
+    
+    def _start(self) -> bool:
+        """Start the mock transport system."""
+        self._is_running = True
+        return self._is_running
+    
+    @property
+    def config_type(self) -> type[MessageTransportConfig]:
+        """Return the type of the mock transport configuration."""
+        return MockMessageTransportConfig
+
+    def _stop(self) -> None:
+        """Stop the mock transport system."""
+        self._is_running = False
+
+    def _send_message(self, message: FederatedActionMessage) -> bool:
+        """Send a message to the mock transport system."""
+        print(f"Mock sending message: {message}")
+        return True
+    
+    def mock_receive(self, message: FederatedActionMessage) -> None:
+        """Mock receiving a message."""
+        print(f"Mock received message: {message}")
+        self._message_received(message)
+    
 
 @dataclass
 class EnabledMessageTransport:

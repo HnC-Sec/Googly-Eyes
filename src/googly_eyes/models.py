@@ -31,7 +31,7 @@ class BaseModerationAction(ABC):
     action_reason: str # Reason for the action
     action_reason_type: ActionReasonType # Classification of the reason
     action_context: str|None # Context that caused the action
-    action_timestamp: datetime = field(default_factory=datetime.now(timezone.utc)) # Timestamp of when the action was taken
+    action_timestamp: datetime = datetime.now(timezone.utc) # Timestamp of when the action was taken
     
 
 class BanAction(BaseModerationAction):
@@ -62,4 +62,4 @@ class FederatedActionMessage:
     action: BaseModerationAction # The moderation action taken
     action_guild_id: str # Discord ID of the guild where the action is taken
     message_id: str = uuid4().hex # Unique identifier for the message
-    message_timestamp: datetime = field(default_factory=datetime.now(timezone.utc)) # Timestamp of when the message was created
+    message_timestamp: datetime = datetime.now(timezone.utc) # Timestamp of when the message was created

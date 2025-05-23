@@ -1,18 +1,31 @@
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
+from dataclasses import dataclass, field
 from typing import Callable
+from uuid import uuid4
 from googly_eyes.models import BaseModerationAction
 from logging import getLogger
 
+@dataclass
+class BotConfig(ABC):
+    """Base class for bot configuration."""
+    name: str = field(default_factory=lambda: f"{__name__}-{uuid4()}")
 
-class DiscordBotInterface(ABC):
+class BotInterface(ABC):
     """Base class for Discord bot interfaces."""
-
-    def __init__(self, token: str) -> None:
-        self._logger = getLogger(__name__)
+    def __init__(self, config: BotConfig) -> None:
+        self._logger = getLogger(f"{__name__}-{config.name}")
         self._logger.debug("Initializing Discord bot interface.")
         self._is_running = False
-        self._token = token
+        if not isinstance(config, self.config_type):
+            raise ValueError(f"Invalid config type. Expected {self.config_type}, got {type(config)}.")
+        self._config = config
         self._action_callback = None
+
+    @property
+    @abstractmethod
+    def config_type(self) -> type[BotConfig]:
+        """Return the type of the bot configuration."""
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def start(self) -> bool:
         """Start the Discord bot interface."""
@@ -50,25 +63,46 @@ class DiscordBotInterface(ABC):
             raise ValueError("Callback must be callable.")
         self._action_callback = callback
 
-    def _handle_action(self, action: BaseModerationAction) -> None:
+    def _propogate_action(self, action: BaseModerationAction) -> None:
         """Handle a moderation action."""
         if self._action_callback:
             self._action_callback(action)
         else:
             self._logger.warning("No action callback set. Action will not be processed.")
 
-class MockDiscordBotInterface(DiscordBotInterface):
-    """Mock implementation of the Discord bot interface for testing purposes."""
+    @abstractmethod
+    def do_action(self, action: BaseModerationAction, propogate: bool = True) -> None:
+        """Perform a moderation action."""
+        raise NotImplementedError("Subclasses must implement this method.")
+
+class MockBotConfig(BotConfig):
+    """Mock configuration for testing purposes."""
+    
+class MockBotInterface(BotInterface):
+    """Mock implementation of the bot interface for testing purposes."""
+
+    @property
+    def config_type(self) -> type[BotConfig]:
+        """Return the type of the bot configuration."""
+        return MockBotConfig
 
     def _start(self) -> bool:
-        self._logger.debug("Mock Discord bot interface started.")
+        self._logger.debug("Mock bot interface  started.")
         return True
 
     def _stop(self) -> bool:
-        self._logger.debug("Mock Discord bot interface stopped.")
+        self._logger.debug("Mock bot interface stopped.")
         return True
     
     def fake_action(self, action: BaseModerationAction) -> None:
         """Simulate receiving a moderation action."""
         self._logger.debug(f"Mock action received: {action}")
-        self._handle_action(action)
+        self._propogate_action(action)
+
+    def do_action(self, action: BaseModerationAction, propogate: bool = True) -> None:
+        """Perform a moderation action."""
+        self._logger.debug(f"Mock action performed: {action}")
+        if propogate:
+            self.fake_action(action)
+        else:
+            self._logger.debug("Action not propagated.")
