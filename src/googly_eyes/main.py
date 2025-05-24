@@ -11,7 +11,7 @@ from googly_eyes.transport import MessageTransport, EnabledMessageTransport, Mes
 from googly_eyes.bot_interface import BotConfig, BotInterface, MockBotConfig, MockBotInterface
 
 
-class GooglyEyesInstance:
+class GooglyEyes:
     _transports: list[EnabledMessageTransport]
     _bots: list[BotInterface]
     _running: bool = False
@@ -28,6 +28,7 @@ class GooglyEyesInstance:
         if not isinstance(bot, BotInterface):
             raise ValueError("Invalid bot type.")
         bot.set_action_callback(self.handle_bot_action)
+        self._logger.info(f"Adding bot: {bot}")
         self._bots.append(bot)
 
     async def handle_bot_action(self, action: BaseModerationAction, source: BotInterface) -> None:
@@ -56,6 +57,7 @@ class GooglyEyesInstance:
         emt.enable_feature(enabled_features)
         if enabled:
             emt.enable()
+        self._logger.info(f"Adding transport: {transport}")
         self._transports.append(emt)
 
     async def handle_transport_message(self, message: FederatedActionMessage, transport: MessageTransport) -> None:
@@ -103,14 +105,14 @@ class GooglyEyesFactory:
     """Factory class for creating GooglyEyes instances."""
     
     @staticmethod
-    def create_basic_instance(bot_interface_type: Type[BotInterface], bot_config: BotConfig) -> GooglyEyesInstance:
+    def create_basic_instance(bot_interface_type: Type[BotInterface], bot_config: BotConfig) -> GooglyEyes:
         """Create a new GooglyEyes instance."""
-        instance = GooglyEyesInstance()
+        instance = GooglyEyes()
         instance.add_bot(bot_interface_type(bot_config))
         return instance
     
     @staticmethod
-    def create_mock_instance() -> GooglyEyesInstance:
+    def create_mock_instance() -> GooglyEyes:
         """Create a new mock GooglyEyes instance."""
         instance = GooglyEyesFactory.create_basic_instance(MockBotInterface, MockBotConfig())
         instance.add_transport(MockMessageTransport, MockMessageTransportConfig(), MessageTransportFeatures.SEND_RECEIVE)

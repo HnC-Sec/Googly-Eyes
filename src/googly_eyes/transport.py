@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import asyncio
 from dataclasses import dataclass, field
 from enum import Flag
+import logging
 from typing import Awaitable, Callable, Coroutine
 from uuid import uuid4
 
@@ -24,6 +25,7 @@ class MessageTransport(ABC):
     _available_features: MessageTransportFeatures = MessageTransportFeatures.NONE
 
     def __init__(self, config: MessageTransportConfig) -> None:
+        self._logger = logging.getLogger(__name__)
         self._receive_callback = None
         self._is_running = False
         if not isinstance(config, self.config_type):
@@ -91,6 +93,9 @@ class MessageTransport(ABC):
     def available_features(self) -> MessageTransportFeatures:
         """Get the available features of the transport."""
         return self._available_features
+    
+    def __repr__(self):
+        return f"{self.__class__.__name__}(config={self._config}, available_features={self._available_features})"
 
 class MockMessageTransportConfig(MessageTransportConfig):
     """Mock message transport configuration for testing purposes."""

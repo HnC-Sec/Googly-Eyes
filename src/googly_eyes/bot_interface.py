@@ -74,6 +74,10 @@ class BotInterface(ABC):
     async def do_action(self, action: BaseModerationAction, propogate: bool = True) -> None:
         """Perform a moderation action."""
         raise NotImplementedError("Subclasses must implement this method.")
+    
+    def __repr__(self) -> str:
+        """Return a string representation of the bot interface."""
+        return f"{self.__class__.__name__}(config={self._config})"
 
 class MockBotConfig(BotConfig):
     """Mock configuration for testing purposes."""
