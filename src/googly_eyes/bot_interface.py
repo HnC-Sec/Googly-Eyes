@@ -56,7 +56,7 @@ class BotInterface(ABC):
         """Check if the Discord bot interface is running."""
         return self._is_running
 
-    def set_action_callback(self, callback: Awaitable) -> None:
+    def set_action_callback(self, callback: Callable[[BaseModerationAction,"BotInterface"],Coroutine]) -> None:
         """Set a callback function to handle moderation actions."""
         self._logger.debug(f"Setting action callback [{callback}].")
         if not callable(callback):

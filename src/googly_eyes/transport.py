@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import asyncio
 from dataclasses import dataclass, field
 from enum import Flag
-from typing import Awaitable, Callable
+from typing import Awaitable, Callable, Coroutine
 from uuid import uuid4
 
 from googly_eyes.models import FederatedActionMessage
@@ -70,7 +70,7 @@ class MessageTransport(ABC):
     def _send_message(self, message: FederatedActionMessage) -> bool:
         """Send a message to the transport system."""
 
-    def set_receive_callback(self, callback: Awaitable) -> None:
+    def set_receive_callback(self, callback: Callable[[FederatedActionMessage,"MessageTransport"],Coroutine]) -> None:
         """Set a callback function to handle received messages."""
         if not callable(callback):
             raise ValueError("Callback must be callable.")
@@ -138,7 +138,7 @@ class EnabledMessageTransport:
             raise RuntimeError("Transport is not enabled for sending.")
         return self._transport.send(message)
     
-    def set_receive_callback(self, callback: Callable[[FederatedActionMessage, MessageTransport], None]) -> None:
+    def set_receive_callback(self, callback: Callable[[FederatedActionMessage, MessageTransport], Coroutine]) -> None:
         """Set a receive callback for the transport."""
         if not self._enabled or not self._enabled_features & MessageTransportFeatures.RECEIVE:
             raise RuntimeError("Transport is not enabled for receiving.")

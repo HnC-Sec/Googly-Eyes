@@ -92,8 +92,8 @@ class HTTPBotInterface(BotInterface):
         """Handle incoming moderation actions."""
         form_data = await request.text()
         data = {key:value for key, value in (item.split('=') for item in form_data.split('&'))}
-        data['action_type'] =  ModerationActionType[data.get('action_type',"").upper()]
-        action = ActionFactory.create_action(**data)
+        action_enum = ModerationActionType[data.pop('action_type',"").upper()]
+        action = ActionFactory.create_action(action_enum, **data)
         self._logger.debug(f"Received action: {action}")
         await self._propogate_action(action)
         return aiohttp.web.Response(text="Action received", status=200)
