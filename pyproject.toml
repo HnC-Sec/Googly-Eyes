@@ -7,7 +7,9 @@ authors = [
     { name = "Jeremy Banker", email = "loredous@loredous.net" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "aiohttp>=3.11.18",
+]
 
 [project.scripts]
 googly-eyes = "googly_eyes:main"

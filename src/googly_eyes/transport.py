@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+import asyncio
 from dataclasses import dataclass, field
 from enum import Flag
-from typing import Callable
+from typing import Awaitable, Callable
 from uuid import uuid4
 
 from googly_eyes.models import FederatedActionMessage
@@ -39,6 +40,7 @@ class MessageTransport(ABC):
         """Start the transport system."""
         if not self._is_running:
             self._is_running = self._start()
+            self._event_loop = asyncio.get_running_loop()
         return self._is_running
             
 
@@ -68,7 +70,7 @@ class MessageTransport(ABC):
     def _send_message(self, message: FederatedActionMessage) -> bool:
         """Send a message to the transport system."""
 
-    def set_receive_callback(self, callback: Callable[[FederatedActionMessage, "MessageTransport"], None]) -> None:
+    def set_receive_callback(self, callback: Awaitable) -> None:
         """Set a callback function to handle received messages."""
         if not callable(callback):
             raise ValueError("Callback must be callable.")
@@ -77,7 +79,7 @@ class MessageTransport(ABC):
     def _message_received(self, message: FederatedActionMessage) -> None:
         """Handle a received message."""
         if self._receive_callback:
-            self._receive_callback(message, self)
+            self._event_loop.create_task(self._receive_callback(message, self))
         else:
             raise ValueError("Receive callback not set.")
         

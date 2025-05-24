@@ -30,13 +30,13 @@ class BaseModerationAction(ABC):
     action_moderator_id: str # Discord ID of the moderator taking the action
     action_reason: str # Reason for the action
     action_reason_type: ActionReasonType # Classification of the reason
-    action_context: str|None # Context that caused the action
+    action_context: str|None = None # Context that caused the action
     action_timestamp: datetime = datetime.now(timezone.utc) # Timestamp of when the action was taken
     
 
 class BanAction(BaseModerationAction):
     """Class for ban actions."""
-    action_type: ModerationActionType = field(default=ModerationActionType.BAN, init=False)
+    action_type: ModerationActionType = ModerationActionType.BAN
     can_appeal: bool = field(default=True) # Whether the user can appeal the ban
 
 
@@ -56,7 +56,27 @@ class TimeoutAction(BaseModerationAction):
 class TrustAction(BaseModerationAction):
     """Class for trust actions."""
     action_type: ModerationActionType = field(default=ModerationActionType.TRUST, init=False)
+
+class ActionFactory:
+    """Factory class for creating moderation actions."""
     
+    @staticmethod
+    def create_action(action_type: ModerationActionType, **kwargs) -> BaseModerationAction:
+        """Create a moderation action based on the action type."""
+        if action_type == ModerationActionType.BAN:
+            return BanAction(action_type, **kwargs)
+        elif action_type == ModerationActionType.KICK:
+            return KickAction(action_type, **kwargs)
+        elif action_type == ModerationActionType.WARN:
+            return WarnAction(action_type, **kwargs)
+        elif action_type == ModerationActionType.TIMEOUT:
+            return TimeoutAction(action_type, **kwargs)
+        elif action_type == ModerationActionType.TRUST:
+            return TrustAction(action_type, **kwargs)
+        else:
+            raise ValueError(f"Unknown action type: {action_type}")
+
+@dataclass
 class FederatedActionMessage:
     """Class for federated action messages."""
     action: BaseModerationAction # The moderation action taken
