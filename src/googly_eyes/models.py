@@ -2,6 +2,7 @@ from abc import ABC
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum, auto
+import json
 from uuid import uuid4
 
 class ModerationActionType(Enum):
@@ -32,6 +33,18 @@ class BaseModerationAction(ABC):
     action_reason_type: ActionReasonType # Classification of the reason
     action_context: str|None = None # Context that caused the action
     action_timestamp: datetime = datetime.now(timezone.utc) # Timestamp of when the action was taken
+
+    def to_json(self) -> str:
+        """Convert the action to a JSON string."""
+        return json.dumps({
+            "action_type": self.action_type.name,
+            "target_user_id": self.target_user_id,
+            "action_moderator_id": self.action_moderator_id,
+            "action_reason": self.action_reason,
+            "action_reason_type": self.action_reason_type.name,
+            "action_context": self.action_context,
+            "action_timestamp": self.action_timestamp.isoformat()
+        })
     
 
 class BanAction(BaseModerationAction):
@@ -76,6 +89,23 @@ class ActionFactory:
         else:
             raise ValueError(f"Unknown action type: {action_type}")
 
+    @staticmethod
+    def from_json(json_string: str) -> BaseModerationAction:
+        """Create a moderation action from a JSON string."""
+        # Placeholder for JSON deserialization logic
+        data = json.loads(json_string)
+        return ActionFactory.from_dict(data)
+        
+    @staticmethod
+    def from_dict(data: dict) -> BaseModerationAction:
+        """Create a moderation action from a dictionary."""
+        # Placeholder for dictionary deserialization logic
+        action_type = ModerationActionType[data.pop('action_type', "")]
+        action_reason_type = ActionReasonType[data.pop('action_reason_type', "")]
+        return ActionFactory.create_action(action_type, action_reason_type=action_reason_type, **data)
+    
+
+
 @dataclass
 class FederatedActionMessage:
     """Class for federated action messages."""
@@ -83,3 +113,21 @@ class FederatedActionMessage:
     action_guild_id: str # Discord ID of the guild where the action is taken
     message_id: str = uuid4().hex # Unique identifier for the message
     message_timestamp: datetime = datetime.now(timezone.utc) # Timestamp of when the message was created
+
+
+    @classmethod
+    def from_json(cls, json_string: str) -> "FederatedActionMessage":
+        """Create a FederatedActionMessage from a JSON string."""
+        # Placeholder for JSON deserialization logic
+        data = json.loads(json_string)
+        action = ActionFactory.from_dict(data.pop('action', {}))
+        return cls(action=action, **data)
+    
+    def to_json(self) -> str:
+        """Convert the FederatedActionMessage to a JSON string."""
+        return json.dumps({
+            "action": json.loads(self.action.to_json()),
+            "action_guild_id": self.action_guild_id,
+            "message_id": self.message_id,
+            "message_timestamp": self.message_timestamp.isoformat()
+        })

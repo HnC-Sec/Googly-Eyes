@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import asyncio
 from dataclasses import dataclass, field
 from enum import Flag
-import logging
+from logging import getLogger
 from typing import Awaitable, Callable, Coroutine
 from uuid import uuid4
 
@@ -25,7 +25,7 @@ class MessageTransport(ABC):
     _available_features: MessageTransportFeatures = MessageTransportFeatures.NONE
 
     def __init__(self, config: MessageTransportConfig) -> None:
-        self._logger = logging.getLogger(__name__)
+        self._logger = getLogger(f"{__name__}-{config.name}")
         self._receive_callback = None
         self._is_running = False
         if not isinstance(config, self.config_type):
